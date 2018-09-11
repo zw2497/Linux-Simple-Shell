@@ -1,0 +1,5 @@
+1.How to read command line input From:http://users.cs.cf.ac.uk/Dave.Marshall/C/node12.html#SECTION001220000000000000000
+2.Dynamically Allocating String Conversions From: https://www.gnu.org/software/libc/manual/html_node/Dynamic-String-Input.html#Dynamic-String-Input
+3.How can I read an input string of unknown length? From: https://www.gnu.org/software/libc/manual/html_node/Line-Input.html#Line-Input
+4.process error From: http://users.cs.cf.ac.uk/Dave.Marshall/C/node18.html#SECTION001810000000000000000
+5.finding tokens in the string From: https://www.gnu.org/software/libc/manual/html_mono/libc.html#Finding-Tokens-in-a-String

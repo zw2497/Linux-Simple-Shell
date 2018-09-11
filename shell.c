@@ -2,8 +2,9 @@
 #include "string.h"
 #include <errno.h>
 #include <stdlib.h>
+#include <zconf.h>
 
-extern int errno;
+
 
 void inputStdin (char **input, size_t *n) {
     if (getline(input , n, stdin) == -1) {
@@ -13,40 +14,65 @@ void inputStdin (char **input, size_t *n) {
 }
 
 void tokenize(char *input, char **argument, int size) {
-    const char *delimiter = " ";
+    const char *delimiter = " \n";
+    int i = 0;
     argument[0] = strtok(input, delimiter);
-    int i = 1;
-    while (argument[i] != NULL) {
-        argument[i] = strtok(NULL, delimiter);
-        i++;
 
-        if (i >= size) {
+    while (argument[i] != NULL) {
+        i++;
+        argument[i] = strtok(NULL, delimiter);
+        if (i > size - 2) {
             size = size * 2;
             argument = realloc(argument, size * sizeof(char*));
-            if (!argument) {
-                fprintf(stderr, "error: %s\n", strerror(errno));
-                exit(EXIT_FAILURE);
-            }
         }
+    }
+
+
+}
+
+void  exeBuildin(char **args) {
+    int pid;
+    int status;
+    pid = fork ();
+    if (pid == 0)
+    {
+        if (execvp (args[0], args) == -1) {
+            fprintf(stderr, "error: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        exit(EXIT_FAILURE);
+    } else if (pid < 0) {
+        /* The fork failed.  Report failure.  */
+        fprintf(stderr, "error: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    } else if (waitpid (pid, &status, 0) != pid) {
+            status = -1;
     }
 
 }
 
 
 int main(void) {
-
+    extern int errno;
     char **originStr;
     size_t size = 100;
 
     char **args;
-    int argNumber = 2;
+    int argNumber = 5;
     args = malloc(argNumber * sizeof(char*));
+
+    int i = 0;
 
     while (1) {
         printf("$");
         inputStdin(originStr, &size);
-        printf("%s", *originStr);
         tokenize(*originStr, args, argNumber);
-        printf("%s\n", args[2]);
+        exeBuildin(args);
+
+        if (i > 5) {
+            return 0;
+        }
+        i++;
     }
 }

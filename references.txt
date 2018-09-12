@@ -5,3 +5,4 @@
 5.finding tokens in the string From: https://www.gnu.org/software/libc/manual/html_mono/libc.html#Finding-Tokens-in-a-String
 6.concatenate two strings in C? From: https://stackoverflow.com/questions/8465006/how-do-i-concatenate-two-strings-in-c
 7.Segmentation fault upon input with getline() From: https://stackoverflow.com/questions/11198305/segmentation-fault-upon-input-with-getline
+8.How to use checkpatch.pl From: http://tuxdiary.com/2015/03/22/check-kernel-code-checkpatch/

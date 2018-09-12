@@ -2,9 +2,8 @@
 #include "string.h"
 #include <errno.h>
 #include <stdlib.h>
-#include <zconf.h>
-
-
+#include <unistd.h>
+#include <wait.h>
 
 void inputStdin (char **input, size_t *n) {
     if (getline(input , n, stdin) == -1) {
@@ -33,10 +32,11 @@ void tokenize(char *input, char **argument, int size) {
 void  exeBuildin(char **args) {
     int pid;
     int status;
+
     pid = fork ();
     if (pid == 0)
     {
-        if (execvp (args[0], args) == -1) {
+        if (execv(args[0], args) == -1) {
             fprintf(stderr, "error: %s\n", strerror(errno));
             exit(EXIT_FAILURE);
         }
@@ -46,8 +46,8 @@ void  exeBuildin(char **args) {
         /* The fork failed.  Report failure.  */
         fprintf(stderr, "error: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
-    } else if (waitpid (pid, &status, 0) != pid) {
-            status = -1;
+    } else if (wait(&status) != pid) {
+        status = -1;
     }
 
 }
@@ -59,7 +59,8 @@ int main(void) {
     size_t size = 100;
 
     char **args;
-    int argNumber = 5;
+    int argNumber = 10;
+    originStr = malloc(argNumber * sizeof(char*));
     args = malloc(argNumber * sizeof(char*));
 
     int i = 0;

@@ -4,8 +4,7 @@
  * Shell
  *
  * Created by Zhicheng WU on 9/10/2018
- * Copyright 2018 Zhicheng Wu.
- * All rights reserved
+ * Copyright 2018 All rights reserved
  */
 
 #include <stdio.h>
@@ -14,6 +13,50 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <wait.h>
+
+
+
+typedef struct history{
+    int offset;
+    char *args;
+} memo;
+
+typedef struct list {
+    int first;
+    int end;
+    memo **m;
+    int size;
+} list;
+
+list *list1;
+
+void printHistory()
+{
+	int p;
+	p = list1->first;
+	while (p != list1->end) {
+		printf("%d %s", list1->m[p]->offset, list1->m[p]->args);
+		p = (p + 1) % 100;
+	}
+}
+
+void addToList(int i, list *l, char **argument){
+
+	memo *m = malloc(sizeof(memo));
+	m->args = malloc(100 * sizeof(char));
+	strcpy(m->args, *argument);
+	m->offset = i;
+
+
+	i = i % 100;
+	l->m[i] = m;
+	l->end = (l->end + 1) % 100;
+	if (l->first == l->end) {
+		l->first = (l->first + 1) % 100;
+	}
+}
+
+
 
 char* concat(const char *s1, const char *s2)
 {
@@ -49,7 +92,7 @@ void tokenize(char *input, char **argument, int size)
 
 }
 
-void exeBuildin(char **args)
+void exe(char **args)
 {
 	int pid;
 	int status;
@@ -75,7 +118,7 @@ void exeBuildin(char **args)
 
 }
 
-void buildin(char **args, char **origin)
+void run(char **args, char **origin)
 {
 	if (strcmp(args[0], "exit") == 0) {
 		free(args);
@@ -84,10 +127,11 @@ void buildin(char **args, char **origin)
 	} else if (strcmp(args[0], "cd") == 0) {
 		if (chdir(args[1]) == -1) {
 			fprintf(stderr, "error: %s\n", strerror(errno));
-			exit(EXIT_FAILURE);
 		}
+	} else if (strcmp(args[0], "history") == 0){
+		printHistory();
 	} else {
-		exeBuildin(args);
+		exe(args);
 	}
 
 }
@@ -98,16 +142,24 @@ int main(void)
 	char **originStr;
 	char **args;
 	int argNumber = 10;
+	int i = 0;
+
 
 	originStr = malloc(argNumber * sizeof(char *));
 	args = malloc(argNumber * sizeof(char *));
 	size_t size = 100;
+	list1 = malloc(sizeof(list));
+	list1->m = malloc(101 * sizeof(memo));
+	list1->first = 0;
+	list1->end = 0;
+
 
 	while (1) {
 		printf("$");
 		inputStdin(originStr, &size);
+		addToList(i++, list1, originStr);
 		tokenize(*originStr, args, argNumber);
-		buildin(args, originStr);
+		run(args, originStr);
 
 	}
 }

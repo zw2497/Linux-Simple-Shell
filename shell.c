@@ -15,6 +15,7 @@
 #include <wait.h>
 #include <inttypes.h>
 #define HISTORY_SIZE 101
+#define ARG_NUMBER 10
 
 
 typedef struct history{
@@ -30,7 +31,22 @@ typedef struct list {
 } list;
 
 list *list1;
+int i = 0;
 
+void deloneElement()
+{
+	if (list1->size == 0) {
+		return;
+	} else {
+		list1->size = list1->size - 1;
+		list1->end = list1->end - 1;
+		if (list1->end < 0) {
+			list1->end = list1->end + HISTORY_SIZE;
+		}
+		i--;
+	}
+
+}
 
 void printHistory(int n)
 {
@@ -95,8 +111,11 @@ void tokenize(char *input, char **argument, int size)
 {
 	const char *delimiter = "\n ";
 	int i = 0;
+	char *temp = malloc(strlen(input) + 1);
+	strcpy(temp, input);
 
-	argument[0] = strtok(input, delimiter);
+
+	argument[0] = strtok(temp, delimiter);
 	while (argument[i] != NULL) {
 		i++;
 		argument[i] = strtok(NULL, delimiter);
@@ -157,6 +176,22 @@ void run(char **args, char **origin)
 			}
 			printHistory(num);
 		}
+	} else if (strcmp(args[0], "!!") == 0) {
+		if (list1->size == 0) {
+			fprintf(stderr, "error: No history command\n");
+		} else {
+			char **arg_new;
+			arg_new = malloc(sizeof(char *));
+			int p = list1->end;
+			p = list1->end - 2;
+			if (p < 0) {
+				p = HISTORY_SIZE + p;
+			}
+			deloneElement();
+			addToList(i++, list1, &list1->m[p]->args);
+			tokenize(list1->m[p]->args, arg_new, ARG_NUMBER);
+			run(arg_new, &list1->m[p]);
+		}
 	} else {
 		exe(args);
 	}
@@ -168,13 +203,12 @@ int main(void)
 {
 	char **originStr;
 	char **args;
-	int argNumber = 10;
-	int i = 0;
 
 
 
-	originStr = malloc(argNumber * sizeof(char *));
-	args = malloc(argNumber * sizeof(char *));
+
+	originStr = malloc(ARG_NUMBER * sizeof(char *));
+	args = malloc(ARG_NUMBER * sizeof(char *));
 	size_t size = 100;
 	list1 = malloc(sizeof(list));
 	list1->m = malloc(HISTORY_SIZE * sizeof(memo));
@@ -186,7 +220,7 @@ int main(void)
 		printf("$");
 		inputStdin(originStr, &size);
 		addToList(i++, list1, originStr);
-		tokenize(*originStr, args, argNumber);
+		tokenize(*originStr, args, ARG_NUMBER);
 		run(args, originStr);
 
 	}

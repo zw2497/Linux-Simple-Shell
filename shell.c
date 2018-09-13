@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <wait.h>
 #include <inttypes.h>
+#include <stdbool.h>
+
 #define HISTORY_SIZE 101
 #define ARG_NUMBER 10
 
@@ -30,8 +32,25 @@ typedef struct list {
     int size;
 } list;
 
+int listnum (int n) {
+	if (n > 0) {
+		n = n % HISTORY_SIZE;
+	} else {
+		n = n + HISTORY_SIZE;
+	}
+	return n;
+}
+
+
 list *list1;
 int i = 0;
+
+bool startsWith(const char *pre, const char *str)
+{
+	size_t lenpre = strlen(pre);
+	size_t lenstr = strlen(str);
+	return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
+}
 
 void deloneElement()
 {
@@ -192,6 +211,27 @@ void run(char **args, char **origin)
 			tokenize(list1->m[p]->args, arg_new, ARG_NUMBER);
 			run(arg_new, &list1->m[p]);
 		}
+	} else if (args[0][0] == '!' && args[0][1] != '!'){
+		int num = list1->end - 1;
+		int match = 0;
+		while (num != list1->first - 1) {
+			if (startsWith(&args[0][1], list1->m[num]->args)) {
+				char **arg_new;
+				arg_new = malloc(sizeof(char *));
+				match = 1;
+				deloneElement();
+				addToList(i++, list1, &list1->m[num]->args);
+				tokenize(list1->m[num]->args, arg_new, ARG_NUMBER);
+				run(arg_new, &list1->m[num]);
+				break;
+			}
+			num = listnum(num - 1);
+		}
+		if (match == 0) {
+			fprintf(stderr, "error: No match\n");
+			deloneElement();
+		}
+
 	} else {
 		exe(args);
 	}
@@ -203,10 +243,6 @@ int main(void)
 {
 	char **originStr;
 	char **args;
-
-
-
-
 	originStr = malloc(ARG_NUMBER * sizeof(char *));
 	args = malloc(ARG_NUMBER * sizeof(char *));
 	size_t size = 100;
@@ -215,13 +251,11 @@ int main(void)
 	list1->first = 0;
 	list1->end = 0;
 
-
 	while (1) {
 		printf("$");
 		inputStdin(originStr, &size);
 		addToList(i++, list1, originStr);
 		tokenize(*originStr, args, ARG_NUMBER);
 		run(args, originStr);
-
 	}
 }

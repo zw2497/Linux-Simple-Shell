@@ -13,7 +13,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <wait.h>
-
+#include <inttypes.h>
+#define HISTORY_SIZE 101
 
 
 typedef struct history{
@@ -30,15 +31,27 @@ typedef struct list {
 
 list *list1;
 
-void printHistory()
+
+void printHistory(int n)
 {
 	int p;
+	if (n > list1->size) {
+		n = list1->size;
+	}
 	p = list1->first;
-	while (p != list1->end) {
+	while (n > 0) {
 		printf("%d %s", list1->m[p]->offset, list1->m[p]->args);
-		p = (p + 1) % 100;
+		p = (p + 1) % HISTORY_SIZE;
+		n --;
 	}
 }
+
+void deleteHistory()
+{
+	list1->first = list1->end;
+	list1->size = 0;
+}
+
 
 void addToList(int i, list *l, char **argument){
 
@@ -48,11 +61,13 @@ void addToList(int i, list *l, char **argument){
 	m->offset = i;
 
 
-	i = i % 100;
+	i = i % HISTORY_SIZE;
 	l->m[i] = m;
-	l->end = (l->end + 1) % 100;
+	l->end = (l->end + 1) % HISTORY_SIZE;
 	if (l->first == l->end) {
-		l->first = (l->first + 1) % 100;
+		l->first = (l->first + 1) % HISTORY_SIZE;
+	} else {
+		list1->size++;
 	}
 }
 
@@ -128,8 +143,10 @@ void run(char **args, char **origin)
 		if (chdir(args[1]) == -1) {
 			fprintf(stderr, "error: %s\n", strerror(errno));
 		}
-	} else if (strcmp(args[0], "history") == 0){
-		printHistory();
+	} else if (strcmp(args[0], "history") == 0 && args[1] == NULL ){
+		printHistory(list1->size);
+	} else if (strcmp(args[0], "history") == 0 && strcmp(args[1], "-c") == 0 ){
+		deleteHistory();
 	} else {
 		exe(args);
 	}
@@ -145,11 +162,12 @@ int main(void)
 	int i = 0;
 
 
+
 	originStr = malloc(argNumber * sizeof(char *));
 	args = malloc(argNumber * sizeof(char *));
 	size_t size = 100;
 	list1 = malloc(sizeof(list));
-	list1->m = malloc(101 * sizeof(memo));
+	list1->m = malloc(HISTORY_SIZE * sizeof(memo));
 	list1->first = 0;
 	list1->end = 0;
 

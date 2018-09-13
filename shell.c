@@ -37,8 +37,10 @@ void printHistory(int n)
 	int p;
 	if (n > list1->size) {
 		n = list1->size;
+	} else if (n < 0) {
+		n = 0;
 	}
-	p = list1->first;
+	p = (list1->first + (list1->size - n)) % HISTORY_SIZE;
 	while (n > 0) {
 		printf("%d %s", list1->m[p]->offset, list1->m[p]->args);
 		p = (p + 1) % HISTORY_SIZE;
@@ -143,10 +145,18 @@ void run(char **args, char **origin)
 		if (chdir(args[1]) == -1) {
 			fprintf(stderr, "error: %s\n", strerror(errno));
 		}
-	} else if (strcmp(args[0], "history") == 0 && args[1] == NULL ){
-		printHistory(list1->size);
-	} else if (strcmp(args[0], "history") == 0 && strcmp(args[1], "-c") == 0 ){
-		deleteHistory();
+	} else if (strcmp(args[0], "history") == 0){
+		if (args[1] == NULL) {
+			printHistory(list1->size);
+		} else if (strcmp(args[1], "-c") == 0) {
+			deleteHistory();
+		} else {
+			uintmax_t num = strtoumax(args[1], NULL, 10);
+			if (num == UINTMAX_MAX && errno == ERANGE) {
+				fprintf(stderr, "error: %s\n", strerror(errno));
+			}
+			printHistory(num);
+		}
 	} else {
 		exe(args);
 	}

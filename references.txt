@@ -1,8 +1,19 @@
-1.How to read command line input From:http://users.cs.cf.ac.uk/Dave.Marshall/C/node12.html#SECTION001220000000000000000
-2.Dynamically Allocating String Conversions From: https://www.gnu.org/software/libc/manual/html_node/Dynamic-String-Input.html#Dynamic-String-Input
-3.How can I read an input string of unknown length? From: https://www.gnu.org/software/libc/manual/html_node/Line-Input.html#Line-Input
-4.process error From: http://users.cs.cf.ac.uk/Dave.Marshall/C/node18.html#SECTION001810000000000000000
-5.finding tokens in the string From: https://www.gnu.org/software/libc/manual/html_mono/libc.html#Finding-Tokens-in-a-String
-6.concatenate two strings in C? From: https://stackoverflow.com/questions/8465006/how-do-i-concatenate-two-strings-in-c
-7.Segmentation fault upon input with getline() From: https://stackoverflow.com/questions/11198305/segmentation-fault-upon-input-with-getline
-8.How to use checkpatch.pl From: http://tuxdiary.com/2015/03/22/check-kernel-code-checkpatch/
+    1.How to read command line input
+From:http://users.cs.cf.ac.uk/Dave.Marshall/C/node12.html#SECTION001220000000000000000
+    2.Dynamically Allocating String Conversions
+From: https://www.gnu.org/software/libc/manual/html_node/Dynamic-String-Input.html#Dynamic-String-Input
+    3.How can I read an input string of unknown length?
+From: https://www.gnu.org/software/libc/manual/html_node/Line-Input.html#Line-Input
+    4.process error
+From: http://users.cs.cf.ac.uk/Dave.Marshall/C/node18.html#SECTION001810000000000000000
+    5.finding tokens in the string
+From: https://www.gnu.org/software/libc/manual/html_mono/libc.html#Finding-Tokens-in-a-String
+    6.concatenate two strings in C?
+From: https://stackoverflow.com/questions/8465006/how-do-i-concatenate-two-strings-in-c
+    7.Segmentation fault upon input with getline()
+From: https://stackoverflow.com/questions/11198305/segmentation-fault-upon-input-with-getline
+    8.How to use checkpatch.pl
+From: http://tuxdiary.com/2015/03/22/check-kernel-code-checkpatch/
+    9.How to convert str to int
+From https://stackoverflow.com/questions/7021725/how-to-convert-a-string-to-integer-in-c
+    10.How to match the begin of the string

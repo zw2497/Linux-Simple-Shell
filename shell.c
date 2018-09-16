@@ -426,12 +426,14 @@ void runwithfork(char **args)
 		historyProcess(args);
 	else if (strcmp(args[0], "!!") == 0){
 		originNew = bang1Process(args);
+		addToList(i++, list1, &originNew);
 		tokenize(originNew, argsNew, ARG_NUMBER);
-		exe(argsNew);
+		runwithfork(argsNew);
 	} else if (args[0][0] == '!' && args[0][1] != '!') {
 		originNew = bang2Process(args);
+		addToList(i++, list1, &originNew);
 		tokenize(originNew, argsNew, ARG_NUMBER);
-		exe(argsNew);
+		runwithfork(argsNew);
 	} else
 		exe(args);
 }
@@ -499,7 +501,7 @@ void run(char *originStr, char **args) {
 	if (pipedetect(originStr)) {
 		char *newOrigin = pipeaddblank(originStr);
 		char **newargs;
-		//newargs = malloc(ARG_NUMBER * sizeof(char *));
+
 		newargs = tokenize(newOrigin, newargs, ARG_NUMBER);
 		pipeProcess(newargs);
 	} else {

@@ -16,7 +16,7 @@ void pipeProcess(char **args);
 void run(char * origin, char** args);
 char *bangProcess(char **);
 bool bangdetected(char **);
-void exepipe(int *file, char **args, int *a, int i1, int size);
+void exepipe(int *file, char **args, int *a, int i1, int size, int pipenumber, int i2);
 
 #define HISTORY_SIZE 101
 #define ARG_NUMBER 10

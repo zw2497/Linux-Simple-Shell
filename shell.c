@@ -140,7 +140,7 @@ void inputStdin(char **input, size_t *n)
 	}
 }
 
-void tokenize(char *input, char **argument, int size)
+char **tokenize(char *input, char **argument, int size)
 {
 	const char *delimiter = "\n ";
 	int i = 0;
@@ -158,6 +158,7 @@ void tokenize(char *input, char **argument, int size)
 			argument = realloc(argument, size * sizeof(char *));
 		}
 	}
+	return argument;
 
 
 }
@@ -272,11 +273,12 @@ void pipeProcess(char **args)
 	int p = 0;
 	pid_t pid;
 	int a[10] = {[0 ... 9] = -1};
-	int mypipe[4];
+	int pipenumber;
 	int size = 0;
 	int c = 0;
 	int number = 0;
 	int i1 = 0;
+	int i2 = 0;
 
 
 	char **formerargs;
@@ -296,8 +298,19 @@ void pipeProcess(char **args)
 		p++;
 	}
 
+	pipenumber = c;
+	int mypipe[2 * pipenumber];
+
+	for(i = 0; i < pipenumber; i++){
+		if(pipe(mypipe + i*2) < 0) {
+			perror("couldn't pipe");
+			exit(EXIT_FAILURE);
+		}
+	}
+
 	former = &args[0];
 	latter = &args[a[i1] + 1];
+
 
 	if(bangdetected(former)) {
 		tokenize(bangProcess(former), formerargs, ARG_NUMBER);
@@ -307,9 +320,6 @@ void pipeProcess(char **args)
 		tokenize(bangProcess(latter), latterargs, ARG_NUMBER);
 		latter = latterargs;
 	}
-
-
-	size--;
 
 	if (pipe(mypipe)) {
 		fprintf(stderr, "Pipe failed.\n");
@@ -324,44 +334,41 @@ void pipeProcess(char **args)
 
 	if (pid == 0) {
 		dup2(mypipe[1], STDOUT_FILENO);
-		close(mypipe[0]);
-		close(mypipe[1]);
-		close(mypipe[2]);
-		close(mypipe[3]);
+		for(i = 0; i < 2 * pipenumber; i++){
+			close(mypipe[i]);
+		}
 		runnofork(former);
 	} else if (pid < (pid_t) 0) {
 		fprintf(stderr, "Fork failed.\n");
 		exit(EXIT_FAILURE);
 	} else {
-		exepipe(mypipe, latter, a, i1, size);
+		exepipe(mypipe, latter, a, i1, size, pipenumber, i2);
 	}
 }
 
-void exepipe(int *file, char **args, int *a, int i1, int size)
+void exepipe(int *file, char **args, int *a, int i1, int size, int pipenumber, int i2)
 {
 	int pid = fork();
 	int status;
 
 	switch (pid) {
 		case 0:
-			if (size > 0) {
-				dup2(file[0], STDIN_FILENO);
-				dup2(file[3], STDOUT_FILENO);
-				close(file[0]);
-				close(file[1]);
-				close(file[2]);
-				close(file[3]);
+			if (size > 1) {
+				dup2(file[i2], STDIN_FILENO);
+				dup2(file[i2 + 3], STDOUT_FILENO);
+				for(i = 0; i < 2 * pipenumber; i++){
+					close(file[i]);
+				}
 				if (execv(args[0], args) == -1) {
 					fprintf(stderr, "error: %s\n", strerror(errno));
 					exit(EXIT_FAILURE);
 				}
 
 			} else {
-				dup2(file[2], STDIN_FILENO);
-				close(file[0]);
-				close(file[1]);
-				close(file[2]);
-				close(file[3]);
+				dup2(file[i2], STDIN_FILENO);
+				for(i = 0; i < 2 * pipenumber; i++){
+					close(file[i]);
+				}
 				if (execv(args[0], args) == -1) {
 					fprintf(stderr, "error: %s\n", strerror(errno));
 					exit(EXIT_FAILURE);
@@ -373,18 +380,18 @@ void exepipe(int *file, char **args, int *a, int i1, int size)
 			fprintf(stderr, "error: %s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		default:
-			if (size > 0) {
+			if (size > 1) {
 				i1++;
 				size--;
-				exepipe(file, &args[a[i1]], a, i1, size);
+				i2 = i2 + 2;
+				exepipe(file, &args[a[i1]], a, i1, size, pipenumber, i2);
 			}
-			close(file[0]);
-			close(file[1]);
-			close(file[2]);
-			close(file[3]);
-			wait(&status);
-			wait(&status);
-			wait(&status);
+			for(i = 0; i < 2 * pipenumber; i++){
+				close(file[i]);
+			}
+			for(i = 0; i < pipenumber + 1; i++){
+				wait(&status);
+			}
 
 	}
 }
@@ -465,6 +472,7 @@ char *pipeaddblank(char *origin)
 	char *split1;
 	char *split2;
 
+
 	while (origin[p1] != '\0') {
 		if (origin[p1] == '|') {
 			split1 = malloc((p1 + 4) * sizeof(char));
@@ -472,7 +480,6 @@ char *pipeaddblank(char *origin)
 				(strlen(origin) - p1 + 1) * sizeof(char));
 			for (int i1 = 0; i1 < p1; i1++)
 				split1[i1] = origin[i1];
-
 				split1[p1] = ' ';
 				split1[p1 + 1] = '|';
 				split1[p1 + 2] = ' ';
@@ -480,20 +487,21 @@ char *pipeaddblank(char *origin)
 				in1 = p1 + 1;
 			for (int i2 = 0; in1 < strlen(origin); in1++, i2++)
 				split2[i2] = origin[in1];
-
+			origin = concat(split1, split2);
+			p1++;
 		}
 		p1++;
 	}
-	origin = concat(split1, split2);
 	return origin;
 }
 
 void run(char *originStr, char **args) {
 	if (pipedetect(originStr)) {
 		char *newOrigin = pipeaddblank(originStr);
-
-		tokenize(newOrigin, args, ARG_NUMBER);
-		pipeProcess(args);
+		char **newargs;
+		//newargs = malloc(ARG_NUMBER * sizeof(char *));
+		newargs = tokenize(newOrigin, newargs, ARG_NUMBER);
+		pipeProcess(newargs);
 	} else {
 		tokenize(originStr, args, ARG_NUMBER);
 		runwithfork(args);

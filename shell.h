@@ -13,6 +13,9 @@ void runnofork(char **args);
 bool pipedetect(char *origin);
 char *pipeaddblank(char *origin);
 void pipeProcess(char **args);
+void run(char * origin, char** args);
+char **bangProcess(char **);
+bool bangdetected(char **);
 
 #define HISTORY_SIZE 101
 #define ARG_NUMBER 10

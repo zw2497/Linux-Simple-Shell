@@ -228,43 +228,30 @@ void historyProcess(char **args)
 	}
 }
 
-char **bang2Process(char **args)
+char *bang2Process(char **args)
 {
 	int num = list1->end - 2;
-	int match = 0;
 	int n = list1->size - 1;
 
 	while (n) {
 		if (startsWith(&args[0][1], list1->m[num]->args)) {
-			//char **arg_new;
-
-			//arg_new = malloc(sizeof(char *));
-			//match = 1;
 			deloneElement();
-			//addToList(i++, list1, &list1->m[num]->args);
-			//run(list1->m[num]->args, arg_new);
-			return &(list1->m[num]->args);
-			break;
+			return list1->m[num]->args;
 		}
 		num = listnum(num - 1);
 		n--;
 	}
-	if (match == 0) {
-		fprintf(stderr, "error: No match\n");
-		deloneElement();
-	}
-	return args;
+	fprintf(stderr, "error: No match\n");
+	deloneElement();
+	return *args;
 }
 
-char **bang1Process(char **args)
+char *bang1Process(char **args)
 {
 	if (list1->size == 1) {
 		fprintf(stderr, "error: No history\n");
 		deloneElement();
 	} else {
-		char **arg_new;
-
-		arg_new = malloc(sizeof(char *));
 		int p;
 
 		p = list1->end - 2;
@@ -275,55 +262,7 @@ char **bang1Process(char **args)
 		return list1->m[p]->args;
 		//run(list1->m[p]->args, arg_new);
 	}
-	return args;
-}
-
-void exepipe(int *file, char **args, int *a, int *i1, int *size)
-{
-	int pid = fork();
-	int file2[2];
-	int status;
-
-	switch (pid) {
-	case 0:
-		close(file[1]);
-		dup2(file[0], STDIN_FILENO);
-		close(file[0]);
-
-		if (*size > 0) {
-			if (pipe(file2)) {
-				fprintf(stderr, "Pipe failed.\n");
-				exit(EXIT_FAILURE);
-			}
-
-			close(file2[0]);
-			dup2(file2[1], STDOUT_FILENO);
-			close(file2[1]);
-		}
-
-		if (execv(args[0], args) == -1) {
-			fprintf(stderr, "error: %s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-
-		if (*size > 0) {
-			*i1++;
-			*size--;
-			exepipe(file2, &args[a[*i1] + 1], a, i1, size);
-		}
-
-		exit(EXIT_SUCCESS);
-		break;
-	case -1:
-		fprintf(stderr, "error: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-		break;
-	default:
-		close(file[0]);
-		close(file[1]);
-		if (waitpid(pid, &status, 0) != pid)
-			status = -1;
-	}
+	return *args;
 }
 
 void pipeProcess(char **args)
@@ -333,9 +272,10 @@ void pipeProcess(char **args)
 	int p = 0;
 	pid_t pid;
 	int a[10] = {[0 ... 9] = -1};
-	int mypipe[2];
+	int mypipe[4];
 	int size = 0;
 	int c = 0;
+	int number = 0;
 	int i1 = 0;
 
 
@@ -347,24 +287,24 @@ void pipeProcess(char **args)
 
 	while (args[p] != NULL) {
 		if (strcmp(args[p], "|") == 0) {
-			a[c++] = p;
+			a[c++] = number;
 			size++;
 			args[p] = NULL;
+			number = 0;
 		}
+		number++;
 		p++;
 	}
 
 	former = &args[0];
 	latter = &args[a[i1] + 1];
 
-	//former = bangProcess(former);
-	//latter = bangProcess(latter);
 	if(bangdetected(former)) {
-		tokenize(*bangProcess(former), formerargs, ARG_NUMBER);
+		tokenize(bangProcess(former), formerargs, ARG_NUMBER);
 		former = formerargs;
 	}
 	if(bangdetected(latter)) {
-		tokenize(*bangProcess(latter), latterargs, ARG_NUMBER);
+		tokenize(bangProcess(latter), latterargs, ARG_NUMBER);
 		latter = latterargs;
 	}
 
@@ -375,22 +315,78 @@ void pipeProcess(char **args)
 		fprintf(stderr, "Pipe failed.\n");
 		exit(EXIT_FAILURE);
 	}
+	if (pipe(mypipe + 2)) {
+		fprintf(stderr, "Pipe failed.\n");
+		exit(EXIT_FAILURE);
+	}
 
 	pid = fork();
 
 	if (pid == 0) {
-		close(mypipe[0]);
 		dup2(mypipe[1], STDOUT_FILENO);
+		close(mypipe[0]);
 		close(mypipe[1]);
+		close(mypipe[2]);
+		close(mypipe[3]);
 		runnofork(former);
 	} else if (pid < (pid_t) 0) {
 		fprintf(stderr, "Fork failed.\n");
 		exit(EXIT_FAILURE);
 	} else {
-		exepipe(mypipe, latter, a, &i1, &size);
+		exepipe(mypipe, latter, a, i1, size);
 	}
+}
 
+void exepipe(int *file, char **args, int *a, int i1, int size)
+{
+	int pid = fork();
+	int status;
 
+	switch (pid) {
+		case 0:
+			if (size > 0) {
+				dup2(file[0], STDIN_FILENO);
+				dup2(file[3], STDOUT_FILENO);
+				close(file[0]);
+				close(file[1]);
+				close(file[2]);
+				close(file[3]);
+				if (execv(args[0], args) == -1) {
+					fprintf(stderr, "error: %s\n", strerror(errno));
+					exit(EXIT_FAILURE);
+				}
+
+			} else {
+				dup2(file[2], STDIN_FILENO);
+				close(file[0]);
+				close(file[1]);
+				close(file[2]);
+				close(file[3]);
+				if (execv(args[0], args) == -1) {
+					fprintf(stderr, "error: %s\n", strerror(errno));
+					exit(EXIT_FAILURE);
+				}
+				exit(EXIT_SUCCESS);
+			}
+
+		case -1:
+			fprintf(stderr, "error: %s\n", strerror(errno));
+			exit(EXIT_FAILURE);
+		default:
+			if (size > 0) {
+				i1++;
+				size--;
+				exepipe(file, &args[a[i1]], a, i1, size);
+			}
+			close(file[0]);
+			close(file[1]);
+			close(file[2]);
+			close(file[3]);
+			wait(&status);
+			wait(&status);
+			wait(&status);
+
+	}
 }
 
 void runnofork(char **args)
@@ -402,10 +398,6 @@ void runnofork(char **args)
 		cdProcess(args);
 	else if (strcmp(args[0], "history") == 0)
 		historyProcess(args);
-	else if (strcmp(args[0], "!!") == 0)
-		bang1Process(args);
-	else if (args[0][0] == '!' && args[0][1] != '!')
-		bang2Process(args);
 	else
 		exenofork(args);
 
@@ -413,17 +405,27 @@ void runnofork(char **args)
 
 void runwithfork(char **args)
 {
+	char *originNew;
+	char **argsNew;
+
+	originNew = malloc(ARG_NUMBER * sizeof(char *));
+	argsNew = malloc(ARG_NUMBER * sizeof(char *));
+
 	if (strcmp(args[0], "exit") == 0)
 		exitProcess(args);
 	else if (strcmp(args[0], "cd") == 0)
 		cdProcess(args);
 	else if (strcmp(args[0], "history") == 0)
 		historyProcess(args);
-	else if (strcmp(args[0], "!!") == 0)
-		bang1Process(args);
-	else if (args[0][0] == '!' && args[0][1] != '!')
-		bang2Process(args);
-	else
+	else if (strcmp(args[0], "!!") == 0){
+		originNew = bang1Process(args);
+		tokenize(originNew, argsNew, ARG_NUMBER);
+		exe(argsNew);
+	} else if (args[0][0] == '!' && args[0][1] != '!') {
+		originNew = bang2Process(args);
+		tokenize(originNew, argsNew, ARG_NUMBER);
+		exe(argsNew);
+	} else
 		exe(args);
 }
 
@@ -436,7 +438,7 @@ bool bangdetected(char **args) {
 }
 
 
-char **bangProcess(char **args)
+char *bangProcess(char **args)
 {
 	if (args[0][0] == '!' && args[0][1] != '!')
 		return bang2Process(args);

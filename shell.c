@@ -102,13 +102,13 @@ void deleteHistory(void)
 }
 
 
-void addToList(int i, struct list *l, char **argument)
+void addToList(int i, struct list *l, char *argument)
 {
 
 	struct memo *m = malloc(sizeof(struct memo));
 
 	m->args = malloc(100 * sizeof(char));
-	strcpy(m->args, *argument);
+	strcpy(m->args, argument);
 	m->offset = i;
 
 
@@ -244,14 +244,15 @@ char *bang2Process(char **args)
 	}
 	fprintf(stderr, "error: No match\n");
 	deloneElement();
-	return *args;
+	return NULL;
 }
 
-char *bang1Process(char **args)
+char *bang1Process()
 {
 	if (list1->size == 1) {
 		fprintf(stderr, "error: No history\n");
 		deloneElement();
+		return NULL;
 	} else {
 		int p;
 
@@ -263,7 +264,6 @@ char *bang1Process(char **args)
 		return list1->m[p]->args;
 		//run(list1->m[p]->args, arg_new);
 	}
-	return *args;
 }
 
 void pipeProcess(char **args)
@@ -313,10 +313,14 @@ void pipeProcess(char **args)
 
 
 	if(bangdetected(former)) {
+		if(bangProcess(former) == NULL)
+			return;
 		tokenize(bangProcess(former), formerargs, ARG_NUMBER);
 		former = formerargs;
 	}
 	if(bangdetected(latter)) {
+		if(bangProcess(latter) == NULL)
+			return;
 		tokenize(bangProcess(latter), latterargs, ARG_NUMBER);
 		latter = latterargs;
 	}
@@ -392,7 +396,6 @@ void exepipe(int *file, char **args, int *a, int i1, int size, int pipenumber, i
 			for(i = 0; i < pipenumber + 1; i++){
 				wait(&status);
 			}
-
 	}
 }
 
@@ -415,7 +418,6 @@ void runwithfork(char **args)
 	char *originNew;
 	char **argsNew;
 
-	originNew = malloc(ARG_NUMBER * sizeof(char *));
 	argsNew = malloc(ARG_NUMBER * sizeof(char *));
 
 	if (strcmp(args[0], "exit") == 0)
@@ -426,12 +428,16 @@ void runwithfork(char **args)
 		historyProcess(args);
 	else if (strcmp(args[0], "!!") == 0){
 		originNew = bang1Process(args);
-		addToList(i++, list1, &originNew);
+		if (originNew == NULL)
+			return;
+		addToList(i++, list1, originNew);
 		tokenize(originNew, argsNew, ARG_NUMBER);
 		runwithfork(argsNew);
 	} else if (args[0][0] == '!' && args[0][1] != '!') {
 		originNew = bang2Process(args);
-		addToList(i++, list1, &originNew);
+		if (originNew == NULL)
+			return;
+		addToList(i++, list1, originNew);
 		tokenize(originNew, argsNew, ARG_NUMBER);
 		runwithfork(argsNew);
 	} else
@@ -453,6 +459,7 @@ char *bangProcess(char **args)
 		return bang2Process(args);
 	if (strcmp(args[0], "!!") == 0)
 		return bang1Process(args);
+	return NULL;
 }
 
 bool pipedetect(char *origin)
@@ -497,9 +504,44 @@ char *pipeaddblank(char *origin)
 	return origin;
 }
 
+char *pipeAddHistory(char *originStr)
+{
+	int p = 0;
+	char *temSum = originStr;
+
+	while (originStr[p] != '\0') {
+		if (originStr[p] == '!' && originStr[p + 1] == '!') {
+			char *b = bang1Process();
+			char *temp = malloc(sizeof(strlen(b)) + 1);
+
+			temp = strcpy(temp, b);
+			temp[strlen(temp) - 1] = '\0';
+			if (temp != NULL) {
+				char *temp1 = malloc(sizeof(strlen(originStr)) + 1);
+				char *temp2 = malloc(sizeof(strlen(originStr)) + 1);
+
+				temp1 = strcpy(temp1, originStr);
+				temp2 = strcpy(temp2, originStr);
+
+				temp1[p] = '\0';
+				temp2 = temp2 + p + 2;
+
+				temSum = concat(temp1, temp);
+				temSum = concat(temSum, temp2);
+			}
+		}
+		p++;
+	}
+	addToList(i++, list1, temSum);
+	return temSum;
+
+
+}
+
 void run(char *originStr, char **args) {
 	if (pipedetect(originStr)) {
-		char *newOrigin = pipeaddblank(originStr);
+		//pipeAddHistory(originStr);
+		char *newOrigin = pipeaddblank(pipeAddHistory(originStr));
 		char **newargs;
 
 		newargs = tokenize(newOrigin, newargs, ARG_NUMBER);
@@ -527,7 +569,7 @@ int main(void)
 	while (1) {
 		printf("$");
 		inputStdin(&originStr, &size);
-		addToList(i++, list1, &originStr);
+		addToList(i++, list1, originStr);
 		run(originStr, args);
 	}
 }

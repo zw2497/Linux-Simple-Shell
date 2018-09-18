@@ -14,9 +14,6 @@ bool pipeDetect(char *origin);
 char *pipeAddBlank(char *origin);
 void pipeProcess(char **args);
 void run(char * origin, char** args);
-char *bangProcess(char **);
-char *bangProcessNoDel(char **);
-bool bangDetected(char **);
 void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 	     int i2);
 

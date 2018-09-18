@@ -164,6 +164,10 @@ char **tokenize(char *input, char **argument, int size)
 	int i = 0;
 	char *temp = malloc(strlen(input) + 1);
 
+	if (temp == NULL) {
+		fprintf(stderr, "error: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	strcpy(temp, input);
 	argument[0] = strtok(temp, delimiter);
 	while (argument[i] != NULL) {
@@ -221,8 +225,11 @@ void exitProcess(char **args)
 
 void cdProcess(char **args)
 {
-	if (chdir(args[1]) == -1)
+	if (chdir(args[1]) == -1) {
 		fprintf(stderr, "error: %s\n", strerror(errno));
+		return;
+	}
+
 }
 
 void historyProcess(char **args)
@@ -537,6 +544,7 @@ char *pipeAddHistory(char *originStr)
 
 			temSum = concat(temp1, temp);
 			temSum = concat(temSum, temp2);
+
 		}
 
 		if (originStr[p] == '!' && (isalpha(originStr[p + 1]) || originStr[p + 1] == '/')) {
@@ -587,20 +595,19 @@ char *pipeAddHistory(char *originStr)
 
 void run(char *originStr, char **args)
 {
-	if (pipeDetect(originStr)) {
-		char *newOrigin = pipeAddBlank(pipeAddHistory(originStr));
-		char **newArgs;
+	char **newArgs;
 
-		if (newOrigin == NULL)
-			return;
+	originStr = pipeAddHistory(originStr);
+	if (originStr == NULL)
+		return;
+	if (pipeDetect(originStr)) {
+		char *newOrigin = pipeAddBlank(originStr);
+
 		newArgs = tokenize(newOrigin, newArgs, ARG_NUMBER);
 		pipeProcess(newArgs);
 	} else {
-		originStr = pipeAddHistory(originStr);
-		if (originStr == NULL)
-			return;
-		tokenize(originStr, args, ARG_NUMBER);
-		runWithFork(args);
+		newArgs = tokenize(originStr, newArgs, ARG_NUMBER);
+		runWithFork(newArgs);
 	}
 }
 
@@ -608,19 +615,14 @@ int main(void)
 {
 	char *originStr;
 	char **args;
-
-	originStr = malloc(ARG_NUMBER * sizeof(char *));
-	if (originStr == NULL) {
-		fprintf(stderr, "error: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-	args = malloc(ARG_NUMBER * sizeof(char *));
-	if (args == NULL) {
-		fprintf(stderr, "error: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
 	size_t size = 100;
 
+	originStr = malloc(ARG_NUMBER * sizeof(char *));
+	args = malloc(ARG_NUMBER * sizeof(char *));
+	if (originStr == NULL || args == NULL) {
+		fprintf(stderr, "error: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	list1 = malloc(sizeof(struct list));
 	list1->m = malloc(HISTORY_SIZE * sizeof(struct memo));
 	list1->first = 0;

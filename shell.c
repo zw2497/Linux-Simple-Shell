@@ -91,9 +91,9 @@ void printHistory(int n)
 
 	if (n > list1->size)
 		n = list1->size;
-	else if (n < 0){
+	else if (n < 0) {
 		fprintf(stderr, "error: invalid number\n");
-		n =0;
+		n = 0;
 	}
 	p = (list1->first + (list1->size - n)) % HISTORY_SIZE;
 	while (n > 0) {
@@ -112,7 +112,7 @@ void deleteHistory(void)
 
 void addToList(struct list *l, char *argument)
 {
-	int listnum;
+	int listNum;
 
 	struct memo *m = malloc(sizeof(struct memo));
 
@@ -121,8 +121,8 @@ void addToList(struct list *l, char *argument)
 	m->offset = iNum;
 
 
-	listnum = iNum % HISTORY_SIZE;
-	l->m[listnum] = m;
+	listNum = iNum % HISTORY_SIZE;
+	l->m[listNum] = m;
 	l->end = (l->end + 1) % HISTORY_SIZE;
 	if (l->first == l->end)
 		l->first = (l->first + 1) % HISTORY_SIZE;
@@ -136,18 +136,26 @@ void addToList(struct list *l, char *argument)
 char *concat(const char *s1, const char *s2)
 {
 	char *result = malloc(strlen(s1) + strlen(s2) + 1);
+	if (result == NULL) {
+		fprintf(stderr, "error: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 
 	strcpy(result, s1);
 	strcat(result, s2);
 	return result;
 }
 
-void inputString(char **input, size_t *n)
+int inputString(char **input, size_t *n)
 {
 	if (getline(input, n, stdin) == -1) {
 		fprintf(stderr, "error: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
+	if (input[0][0] == '\n') {
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
 }
 
 char **tokenize(char *input, char **argument, int size)
@@ -327,8 +335,8 @@ void pipeProcess(char **args)
 	pipenumber = c;
 	int myPipe[2 * pipenumber];
 
-	for(int i = 0; i < pipenumber; i++) {
-		if(pipe(myPipe + i*2) < 0) {
+	for (int i = 0; i < pipenumber; i++) {
+		if (pipe(myPipe + i*2) < 0) {
 			perror("couldn't pipe");
 			exit(EXIT_FAILURE);
 		}
@@ -350,7 +358,7 @@ void pipeProcess(char **args)
 
 	if (pid == 0) {
 		dup2(myPipe[1], STDOUT_FILENO);
-		for(int i = 0; i < 2 * pipenumber; i++)
+		for (int i = 0; i < 2 * pipenumber; i++)
 			close(myPipe[i]);
 		runNoFork(former);
 	} else if (pid < (pid_t) 0) {
@@ -372,7 +380,7 @@ void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 		if (size > 1) {
 			dup2(file[i2], STDIN_FILENO);
 			dup2(file[i2 + 3], STDOUT_FILENO);
-			for(int i = 0; i < 2 * pipenumber; i++)
+			for (int i = 0; i < 2 * pipenumber; i++)
 				close(file[i]);
 			if (execv(args[0], args) == -1) {
 				fprintf(stderr, "error: %s\n", strerror(errno));
@@ -381,7 +389,7 @@ void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 
 		} else {
 			dup2(file[i2], STDIN_FILENO);
-			for(int i = 0; i < 2 * pipenumber; i++)
+			for (int i = 0; i < 2 * pipenumber; i++)
 				close(file[i]);
 			if (execv(args[0], args) == -1) {
 				fprintf(stderr, "error: %s\n", strerror(errno));
@@ -401,9 +409,9 @@ void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 			exePipe(file, &args[a[i1]], a, i1, size,
 				pipenumber, i2);
 		}
-		for(int i = 0; i < 2 * pipenumber; i++)
+		for (int i = 0; i < 2 * pipenumber; i++)
 			close(file[i]);
-		for(int i = 0; i < pipenumber + 1; i++)
+		for (int i = 0; i < pipenumber + 1; i++)
 			wait(&status);
 	}
 }
@@ -535,7 +543,8 @@ char *pipeAddHistory(char *originStr)
 			char *temp1 = malloc(strlen(originStr) + 1);
 			char *temp2 = malloc(strlen(originStr) + 1);
 			char *temp3 = malloc(strlen(originStr) + 1);
-			if (temp1 == NULL || temp2 == NULL || temp3 ==NULL) {
+
+			if (temp1 == NULL || temp2 == NULL || temp3 == NULL) {
 				fprintf(stderr, "error: %s\n", strerror(errno));
 				exit(EXIT_FAILURE);
 			}
@@ -619,7 +628,8 @@ int main(void)
 
 	while (1) {
 		printf("$");
-		inputString(&originStr, &size);
+		if (inputString(&originStr, &size) == 1)
+			continue;
 		run(originStr, args);
 	}
 }

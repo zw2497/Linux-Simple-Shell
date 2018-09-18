@@ -1,5 +1,4 @@
-/*
- * SPDX-License-Identifier: 0BSD
+/* SPDX-License-Identifier: 0BSD
  * Shell.c
  * Shell
  *
@@ -29,8 +28,6 @@ int end;
 struct memo **m;
 int size;
 };
-
-
 
 struct list *list1;
 int iNum;
@@ -68,8 +65,11 @@ bool startsWith(const char *pre, const char *str)
 
 void deloneElement(void)
 {
-	if (list1->size == 0)
+	if (list1->size == 0) {
+		fprintf(stderr, "error: No history to delete\n");
 		return;
+	}
+
 	list1->size = list1->size - 1;
 	list1->end = list1->end - 1;
 	if (list1->end < 0)
@@ -83,10 +83,18 @@ void printHistory(int n)
 {
 	int p;
 
+	if (list1->size == 0) {
+		fprintf(stderr, "error: No history to print\n");
+		return;
+	}
+
+
 	if (n > list1->size)
 		n = list1->size;
-	else if (n < 0)
-		n = 0;
+	else if (n < 0){
+		fprintf(stderr, "error: invalid number\n");
+		n =0;
+	}
 	p = (list1->first + (list1->size - n)) % HISTORY_SIZE;
 	while (n > 0) {
 		printf("%d %s", list1->m[p]->offset, list1->m[p]->args);
@@ -104,6 +112,7 @@ void deleteHistory(void)
 
 void addToList(struct list *l, char *argument)
 {
+	int listnum;
 
 	struct memo *m = malloc(sizeof(struct memo));
 
@@ -112,8 +121,8 @@ void addToList(struct list *l, char *argument)
 	m->offset = iNum;
 
 
-	iNum = iNum % HISTORY_SIZE;
-	l->m[iNum] = m;
+	listnum = iNum % HISTORY_SIZE;
+	l->m[listnum] = m;
 	l->end = (l->end + 1) % HISTORY_SIZE;
 	if (l->first == l->end)
 		l->first = (l->first + 1) % HISTORY_SIZE;
@@ -249,15 +258,14 @@ char *bang1Process()
 		fprintf(stderr, "error: No history\n");
 		deloneElement();
 		return NULL;
-	} else {
-		int p;
-
-		p = list1->end - 2;
-		if (p < 0)
-			p = HISTORY_SIZE + p;
-		deloneElement();
-		return list1->m[p]->args;
 	}
+	int p;
+
+	p = list1->end - 2;
+	if (p < 0)
+		p = HISTORY_SIZE + p;
+	deloneElement();
+	return list1->m[p]->args;
 }
 
 char *bang2ProcessNoDel(char *args)
@@ -266,9 +274,8 @@ char *bang2ProcessNoDel(char *args)
 	int n = list1->size;
 
 	while (n) {
-		if (startsWith(&args[1], list1->m[num]->args)) {
+		if (startsWith(&args[1], list1->m[num]->args))
 			return list1->m[num]->args;
-		}
 		num = listNum(num - 1);
 		n--;
 	}
@@ -282,17 +289,15 @@ char *bang1ProcessNoDel()
 		fprintf(stderr, "error: No history\n");
 		deloneElement();
 		return NULL;
-	} else {
-		int p;
-
-		p = list1->end - 1;
-		if (p < 0)
-			p = HISTORY_SIZE + p;
-		return list1->m[p]->args;
 	}
+	int p;
+
+	p = list1->end - 1;
+	if (p < 0)
+		p = HISTORY_SIZE + p;
+	return list1->m[p]->args;
+
 }
-
-
 
 void pipeProcess(char **args)
 {
@@ -322,7 +327,7 @@ void pipeProcess(char **args)
 	pipenumber = c;
 	int myPipe[2 * pipenumber];
 
-	for(int i = 0; i < pipenumber; i++){
+	for(int i = 0; i < pipenumber; i++) {
 		if(pipe(myPipe + i*2) < 0) {
 			perror("couldn't pipe");
 			exit(EXIT_FAILURE);
@@ -345,9 +350,8 @@ void pipeProcess(char **args)
 
 	if (pid == 0) {
 		dup2(myPipe[1], STDOUT_FILENO);
-		for(int i = 0; i < 2 * pipenumber; i++){
+		for(int i = 0; i < 2 * pipenumber; i++)
 			close(myPipe[i]);
-		}
 		runNoFork(former);
 	} else if (pid < (pid_t) 0) {
 		fprintf(stderr, "Fork failed.\n");
@@ -368,9 +372,8 @@ void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 		if (size > 1) {
 			dup2(file[i2], STDIN_FILENO);
 			dup2(file[i2 + 3], STDOUT_FILENO);
-			for(int i = 0; i < 2 * pipenumber; i++){
+			for(int i = 0; i < 2 * pipenumber; i++)
 				close(file[i]);
-			}
 			if (execv(args[0], args) == -1) {
 				fprintf(stderr, "error: %s\n", strerror(errno));
 				exit(EXIT_FAILURE);
@@ -378,9 +381,8 @@ void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 
 		} else {
 			dup2(file[i2], STDIN_FILENO);
-			for(int i = 0; i < 2 * pipenumber; i++){
+			for(int i = 0; i < 2 * pipenumber; i++)
 				close(file[i]);
-			}
 			if (execv(args[0], args) == -1) {
 				fprintf(stderr, "error: %s\n", strerror(errno));
 				exit(EXIT_FAILURE);
@@ -399,12 +401,10 @@ void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 			exePipe(file, &args[a[i1]], a, i1, size,
 				pipenumber, i2);
 		}
-		for(int i = 0; i < 2 * pipenumber; i++){
+		for(int i = 0; i < 2 * pipenumber; i++)
 			close(file[i]);
-		}
-		for(int i = 0; i < pipenumber + 1; i++){
+		for(int i = 0; i < pipenumber + 1; i++)
 			wait(&status);
-		}
 	}
 }
 
@@ -413,11 +413,10 @@ void runNoFork(char **args)
 
 	if (strcmp(args[0], "exit") == 0)
 		exitProcess(args);
-	else if (strcmp(args[0], "cd") == 0){
+	else if (strcmp(args[0], "cd") == 0) {
 		cdProcess(args);
 		exit(EXIT_SUCCESS);
-	}
-	else if (strcmp(args[0], "history") == 0){
+	} else if (strcmp(args[0], "history") == 0) {
 		historyProcess(args);
 		exit(EXIT_SUCCESS);
 	} else
@@ -438,7 +437,7 @@ void runWithFork(char **args)
 		cdProcess(args);
 	else if (strcmp(args[0], "history") == 0)
 		historyProcess(args);
-	else if (strcmp(args[0], "!!") == 0){
+	else if (strcmp(args[0], "!!") == 0) {
 		originNew = bang1Process(args);
 		if (originNew == NULL)
 			return;
@@ -455,33 +454,6 @@ void runWithFork(char **args)
 	} else
 		exe(args);
 }
-
-bool bangDetected(char **args) {
-	if (args[0][0] == '!' && args[0][1] != '!')
-		return true;
-	if (strcmp(args[0], "!!") == 0)
-		return true;
-	return false;
-}
-
-
-/*char *bangProcess(char **args)
-{
-	if (args[0][0] == '!' && args[0][1] != '!')
-		return bang2Process(args);
-	if (strcmp(args[0], "!!") == 0)
-		return bang1Process(args);
-	return NULL;
-}*/
-
-/*char *bangProcessNoDel(char **args)
-{
-	if (args[0][0] == '!' && args[0][1] != '!')
-		return bang2ProcessNoDel(args);
-	if (strcmp(args[0], "!!") == 0)
-		return bang1ProcessNoDel(args);
-	return NULL;
-}*/
 
 bool pipeDetect(char *origin)
 {
@@ -502,6 +474,8 @@ char *pipeAddBlank(char *origin)
 	char *split1;
 	char *split2;
 
+	if (origin == NULL)
+		return NULL;
 
 	while (origin[p1] != '\0') {
 		if (origin[p1] == '|') {
@@ -525,6 +499,9 @@ char *pipeAddBlank(char *origin)
 	return origin;
 }
 
+
+
+
 char *pipeAddHistory(char *originStr)
 {
 	int p = 0;
@@ -533,37 +510,42 @@ char *pipeAddHistory(char *originStr)
 	while (originStr[p] != '\0') {
 		if (originStr[p] == '!' && originStr[p + 1] == '!') {
 			char *b = bang1ProcessNoDel();
-			char *temp = malloc(sizeof(strlen(b)) + 1);
+
+			if (b == NULL)
+				return NULL;
+			char *temp = malloc(strlen(b) + 1);
 
 			temp = strcpy(temp, b);
 			temp[strlen(temp) - 1] = '\0';
-			if (temp != NULL) {
-				char *temp1 = malloc(sizeof(strlen(originStr)) + 1);
-				char *temp2 = malloc(sizeof(strlen(originStr)) + 1);
 
-				temp1 = strcpy(temp1, originStr);
-				temp2 = strcpy(temp2, originStr);
+			char *temp1 = malloc(strlen(originStr) + 1);
+			char *temp2 = malloc(strlen(originStr) + 1);
 
-				temp1[p] = '\0';
-				temp2 = temp2 + p + 2;
+			temp1 = strcpy(temp1, originStr);
+			temp2 = strcpy(temp2, originStr);
 
-				temSum = concat(temp1, temp);
-				temSum = concat(temSum, temp2);
-			}
+			temp1[p] = '\0';
+			temp2 = temp2 + p + 2;
+
+			temSum = concat(temp1, temp);
+			temSum = concat(temSum, temp2);
 		}
 
-		if (originStr[p] == '!' && isalpha(originStr[p + 1])) {
-
-
-			char *temp1 = malloc(sizeof(strlen(originStr)) + 1);
-			char *temp2 = malloc(sizeof(strlen(originStr)) + 1);
-			char *temp3 = malloc(sizeof(strlen(originStr)) + 1);
+		if (originStr[p] == '!' && (isalpha(originStr[p + 1]) || originStr[p + 1] == '/')) {
+			char *temp1 = malloc(strlen(originStr) + 1);
+			char *temp2 = malloc(strlen(originStr) + 1);
+			char *temp3 = malloc(strlen(originStr) + 1);
+			if (temp1 == NULL || temp2 == NULL || temp3 ==NULL) {
+				fprintf(stderr, "error: %s\n", strerror(errno));
+				exit(EXIT_FAILURE);
+			}
 
 			temp1 = strcpy(temp1, originStr);
 			temp2 = strcpy(temp2, originStr);
 			temp3 = strcpy(temp3, originStr);
 
 			int endPosition = p;
+
 			while (originStr[endPosition] != '\0') {
 				if (originStr[endPosition] == '\n' || originStr[endPosition] == ' ' || originStr[endPosition] == '|')
 					break;
@@ -571,9 +553,10 @@ char *pipeAddHistory(char *originStr)
 			}
 			temp3[endPosition] = '\0';
 			temp3 = temp3 + p;
-
-
 			char *b = bang2ProcessNoDel(temp3);
+
+			if (b == NULL)
+				return NULL;
 			char *temp = malloc(sizeof(strlen(b)) + 1);
 
 			temp = strcpy(temp, b);
@@ -584,11 +567,7 @@ char *pipeAddHistory(char *originStr)
 
 			temSum = concat(temp1, temp);
 			temSum = concat(temSum, temp2);
-
 		}
-		
-		
-		
 		p++;
 	}
 	addToList(list1, temSum);
@@ -597,15 +576,20 @@ char *pipeAddHistory(char *originStr)
 
 }
 
-void run(char *originStr, char **args) {
+void run(char *originStr, char **args)
+{
 	if (pipeDetect(originStr)) {
 		char *newOrigin = pipeAddBlank(pipeAddHistory(originStr));
 		char **newArgs;
 
+		if (newOrigin == NULL)
+			return;
 		newArgs = tokenize(newOrigin, newArgs, ARG_NUMBER);
 		pipeProcess(newArgs);
 	} else {
 		originStr = pipeAddHistory(originStr);
+		if (originStr == NULL)
+			return;
 		tokenize(originStr, args, ARG_NUMBER);
 		runWithFork(args);
 	}
@@ -617,7 +601,15 @@ int main(void)
 	char **args;
 
 	originStr = malloc(ARG_NUMBER * sizeof(char *));
+	if (originStr == NULL) {
+		fprintf(stderr, "error: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	args = malloc(ARG_NUMBER * sizeof(char *));
+	if (args == NULL) {
+		fprintf(stderr, "error: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	size_t size = 100;
 
 	list1 = malloc(sizeof(struct list));

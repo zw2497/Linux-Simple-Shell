@@ -8,14 +8,16 @@
 #endif //F18_HMWK1_ZW2497_SHELL_H
 
 #include <stdbool.h>
-void runWithFork(char **args);
-void runNoFork(char **args);
-bool pipeDetect(char *origin);
-char *pipeAddBlank(char *origin);
-void pipeProcess(char **args);
-void run(char * origin, char** args);
+void runWithFork();
+void runNoFork();
+bool pipeDetect();
+int pipeAddBlank();
+void pipeProcess();
+void run();
 void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 	     int i2);
 
 #define HISTORY_SIZE 101
-#define ARG_NUMBER 10
+#define ARG_NUMBER 101
+#define EACH_ARG_NUMBER 101
+#define ORIGIN_SIZE 101

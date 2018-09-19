@@ -645,7 +645,7 @@ char *alterBang(int p)
 
 	if (b == NULL)
 		return NULL;
-	char *temp = malloc(sizeof(strlen(b)) + 1);
+	char *temp = malloc(strlen(b) + 1);
 
 	strcpy(temp, b);
 	temp[strlen(temp) - 1] = '\0';

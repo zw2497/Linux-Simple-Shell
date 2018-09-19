@@ -1,1 +1,19 @@
-
+$cd /usr
+$/bin/ls
+bin  games  include  lib  lib32  local	sbin  share  src
+$!/ | /usr/bin/wc
+      9       9      49
+$/bin/echo !!
+      1       1       8
+$!/b | /usr/bin/wc -w
+3
+$/bin/echo !!
+3
+$history
+0 cd /usr
+1 /bin/ls
+2 /bin/ls | /usr/bin/wc
+3 /bin/echo /bin/ls | /usr/bin/wc
+4 /bin/echo /bin/ls | /usr/bin/wc | /usr/bin/wc -w
+5 /bin/echo /bin/echo /bin/ls | /usr/bin/wc | /usr/bin/wc -w
+6 history

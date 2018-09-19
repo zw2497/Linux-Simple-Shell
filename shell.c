@@ -31,8 +31,8 @@ int size;
 
 struct list *list1;
 int iNum;
-char *ori = NULL;
-char **arg = NULL;
+char *ori;
+char **arg;
 
 int listNum(int n)
 {
@@ -102,6 +102,7 @@ int printHistory(int n)
 		p = (p + 1) % HISTORY_SIZE;
 		n--;
 	}
+	return EXIT_SUCCESS;
 }
 
 void deleteHistory(void)
@@ -126,7 +127,7 @@ void addToList(struct list *l, char *argument)
 	iNum++;
 }
 
-void freeHistory()
+void freeHistory(void)
 {
 	for (int itemp = 0; itemp < HISTORY_SIZE; itemp++) {
 		free(list1->m[itemp]->args);
@@ -137,7 +138,7 @@ void freeHistory()
 	free(list1);
 }
 
-void freeOriArg()
+void freeOriArg(void)
 {
 	free(ori);
 	for (int itemp = 0; itemp < ARG_NUMBER; itemp++)
@@ -146,7 +147,8 @@ void freeOriArg()
 	arg = NULL;
 }
 
-int initOriArg() {
+int initOriArg(void)
+{
 	ori = NULL;
 	arg = malloc(ARG_NUMBER * sizeof(char *));
 	if (arg == NULL) {
@@ -188,14 +190,14 @@ int inputString(char **input, size_t *n)
 	}
 	if (input[0][0] == '\n')
 		return EXIT_FAILURE;
-	if (strlen(input[0]) > ORIGIN_SIZE - 1){
+	if (strlen(input[0]) > ORIGIN_SIZE - 1) {
 		fprintf(stderr, "error: Too long argument \n");
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
 }
 
-int tokenize()
+int tokenize(void)
 {
 	const char *delimiter = "\n ";
 	int i = 0;
@@ -272,14 +274,14 @@ void exeNoFork(char **args)
 
 }
 
-void exitProcess()
+void exitProcess(void)
 {
 	freeHistory();
 	freeOriArg();
 	exit(EXIT_SUCCESS);
 }
 
-void cdProcess()
+void cdProcess(void)
 {
 	if (chdir(arg[1]) == -1) {
 		fprintf(stderr, "error: %s\n", strerror(errno));
@@ -288,7 +290,7 @@ void cdProcess()
 
 }
 
-int historyProcess()
+int historyProcess(void)
 {
 	if (arg[1] == NULL) {
 		printHistory(list1->size);
@@ -306,6 +308,7 @@ int historyProcess()
 		fprintf(stderr, "error: invalid command\n");
 		return EXIT_FAILURE;
 	}
+	return EXIT_SUCCESS;
 }
 
 char *bang2Process()
@@ -372,7 +375,7 @@ char *bang1ProcessNoDel()
 
 }
 
-void pipeProcess()
+void pipeProcess(void)
 {
 	char **former;
 	char **latter;
@@ -482,23 +485,7 @@ void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 	}
 }
 
-void runNoFork()
-{
-
-	if (strcmp(arg[0], "exit") == 0)
-		exitProcess();
-	else if (strcmp(arg[0], "cd") == 0) {
-		cdProcess(arg);
-		exit(EXIT_SUCCESS);
-	} else if (strcmp(arg[0], "history") == 0) {
-		historyProcess(arg);
-		exit(EXIT_SUCCESS);
-	} else
-		exeNoFork(arg);
-
-}
-
-void runWithFork()
+void runWithFork(void)
 {
 	if (strcmp(arg[0], "exit") == 0) {
 		exitProcess();
@@ -524,7 +511,7 @@ void runWithFork()
 		exe(arg);
 }
 
-bool pipeDetect()
+bool pipeDetect(void)
 {
 	int p1 = 0;
 
@@ -536,7 +523,7 @@ bool pipeDetect()
 	return false;
 }
 
-int pipeAddBlank()
+int pipeAddBlank(void)
 {
 	int p1 = 0;
 	int in1;
@@ -553,10 +540,8 @@ int pipeAddBlank()
 			split2 = malloc(
 				(strlen(ori) - p1 + 1) * sizeof(char));
 
-			for (int i1 = 0; i1 < p1; i1++) {
+			for (int i1 = 0; i1 < p1; i1++)
 				split1[i1] = ori[i1];
-			}
-
 
 			split1[p1] = ' ';
 			split1[p1 + 1] = '|';
@@ -570,9 +555,8 @@ int pipeAddBlank()
 			p1++;
 			free(split1);
 			free(split2);
-			if (temp != NULL) {
+			if (temp != NULL)
 				strcpy(ori, temp);
-			}
 			free(temp);
 		}
 		p1++;
@@ -665,15 +649,14 @@ char *alterBang(int p)
 }
 
 
-int AddHistory()
+int AddHistory(void)
 {
 	int p = 0;
 	char *temSum = ori;
 
 	while (ori[p] != '\0') {
-		if (ori[p] == '!' && ori[p + 1] == '!') {
+		if (ori[p] == '!' && ori[p + 1] == '!')
 			temSum = alterBangBang(p);
-		}
 		if (ori[p] == '!' &&
 		(isalpha(ori[p + 1]) || ori[p + 1] == '/')) {
 			temSum = alterBang(p);
@@ -690,18 +673,18 @@ int AddHistory()
 	return EXIT_SUCCESS;
 }
 
-void run()
+void run(void)
 {
-	if (AddHistory(ori) == EXIT_FAILURE)
+	if (AddHistory() == EXIT_FAILURE)
 		return;
 	if (pipeDetect()) {
-		if(pipeAddBlank() == EXIT_FAILURE)
+		if (pipeAddBlank() == EXIT_FAILURE)
 			return;
-		if(tokenize() == EXIT_FAILURE)
+		if (tokenize() == EXIT_FAILURE)
 			return;
 		pipeProcess();
 	} else {
-		if(tokenize() == EXIT_FAILURE)
+		if (tokenize() == EXIT_FAILURE)
 			return;
 		runWithFork();
 	}
@@ -709,7 +692,7 @@ void run()
 
 }
 
-int init()
+int init(void)
 {
 	list1 = malloc(sizeof(struct list));
 	if (list1 == NULL) {
@@ -717,7 +700,7 @@ int init()
 		return EXIT_FAILURE;
 	}
 
-	list1->m = malloc(HISTORY_SIZE * sizeof(struct memo*));
+	list1->m = malloc(HISTORY_SIZE * sizeof(struct memo *));
 	if (list1->m == NULL) {
 		fprintf(stderr, "error: %s\n", strerror(errno));
 		return EXIT_FAILURE;
@@ -756,14 +739,14 @@ int main(void)
 		}
 
 		while (1) {
-			if (initOriArg() == EXIT_FAILURE){
+			if (initOriArg() == EXIT_FAILURE) {
 				freeOriArg();
 				break;
 			}
 			printf("$");
 			if (inputString(&ori, &size) == EXIT_FAILURE)
 				continue;
-			run(ori);
+			run();
 			freeOriArg();
 
 		}

@@ -568,14 +568,14 @@ int pipeAddBlank()
 
 			temp = concat(split1, split2);
 			p1++;
+			free(split1);
+			free(split2);
+			if (temp != NULL) {
+				strcpy(ori, temp);
+			}
+			free(temp);
 		}
 		p1++;
-	}
-	if (temp != NULL) {
-		strcpy(ori, temp);
-		free(temp);
-		free(split1);
-		free(split2);
 	}
 	return EXIT_SUCCESS;
 }

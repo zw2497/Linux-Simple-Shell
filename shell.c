@@ -191,7 +191,7 @@ int inputString(char **input, size_t *n)
 	if (input[0][0] == '\n')
 		return EXIT_FAILURE;
 	if (strlen(input[0]) > ORIGIN_SIZE - 1) {
-		fprintf(stderr, "error: Too long argument \n");
+		fprintf(stderr, "error: Too long argument\n");
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
@@ -608,12 +608,15 @@ char *alterBang(int p)
 
 	if (temp1 == NULL || temp2 == NULL || temp3 == NULL) {
 		fprintf(stderr, "error: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
+		free(temp1);
+		free(temp2);
+		free(temp3);
+		return NULL;
 	}
 
-	temp1 = strcpy(temp1, ori);
-	temp2 = strcpy(temp2, ori);
-	temp3 = strcpy(temp3, ori);
+	strcpy(temp1, ori);
+	strcpy(temp2, ori);
+	strcpy(temp3, ori);
 
 	int endPosition = p;
 
@@ -627,8 +630,13 @@ char *alterBang(int p)
 	temp3 = temp3 + p;
 	char *b = bang2ProcessNoDel(temp3);
 
-	if (b == NULL)
+	if (b == NULL) {
+		free(temp1);
+		free(temp2);
+		free(temp3);
 		return NULL;
+	}
+
 	char *temp = malloc(strlen(b) + 1);
 
 	strcpy(temp, b);
@@ -655,21 +663,26 @@ int AddHistory(void)
 	char *temSum = ori;
 
 	while (ori[p] != '\0') {
-		if (ori[p] == '!' && ori[p + 1] == '!')
+		if (ori[p] == '!' && ori[p + 1] == '!') {
 			temSum = alterBangBang(p);
+			if (temSum != NULL)
+				strcpy(ori, temSum);
+			else
+				return EXIT_FAILURE;
+			free(temSum);
+		}
 		if (ori[p] == '!' &&
 		(isalpha(ori[p + 1]) || ori[p + 1] == '/')) {
 			temSum = alterBang(p);
+			if (temSum != NULL)
+				strcpy(ori, temSum);
+			else
+				return EXIT_FAILURE;
+			free(temSum);
 		}
 		p++;
 	}
-	if (temSum == NULL)
-		return EXIT_FAILURE;
-	addToList(list1, temSum);
-	if (temSum != ori) {
-		strcpy(ori, temSum);
-		free(temSum);
-	}
+	addToList(list1, ori);
 	return EXIT_SUCCESS;
 }
 

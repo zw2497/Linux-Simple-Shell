@@ -8,12 +8,11 @@
 #endif //F18_HMWK1_ZW2497_SHELL_H
 
 #include <stdbool.h>
-void runWithFork();
-void runNoFork();
-bool pipeDetect();
-int pipeAddBlank();
-void pipeProcess();
-void run();
+void runWithFork(void);
+bool pipeDetect(void);
+int pipeAddBlank(void);
+void pipeProcess(void);
+void run(void);
 void exePipe(int *file, char **args, int *a, int i1, int size, int pipenumber,
 	     int i2);
 

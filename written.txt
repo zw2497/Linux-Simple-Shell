@@ -2,43 +2,45 @@
    a,c,e,f,g,h
 
 2. Exercise 1.14
-   when a hardware is powerful and expensive, it can use
-   this OS to share the compute resources with others in
-   order to lower its cost.
+   when a hardware is powerful and expensive, users can use
+   time-sharing system to share the compute resources with others. In
+   this way, users can get a faster computer than a PC with lower cost.
 
 3. Exercise 1.19
-   (1) Interrupt signaled the occurrence of an event. Both
-   hardware and software need to trigger interrupts to
-   inform CPU to immediately transfer execution to another.
-   Many I/O devices need interrupt to perform action.
+   (1) Interrupt signaled the occurrence of an event. So, the computer could
+   deal with this event immediately and return to previous process when it
+   gets done. Both hardware and software need to trigger interrupts to
+   inform CPU to immediately transfer execution to another. Many I/O devices
+   need interrupt to perform action.
 
    (2) A trap is a software-generated interrupt, but interrupt
-   can be caused by a hardware.
+   can be caused by a hardware.A interrupt used to signal event from I/O
+   devices, while a trap can be used by application to catch error.
 
-   (3) Yes, a trap can caused by a specific request from
-   a user program that an operating-system service be performed.
+   (3) Yes, Although a trap can caused by error, it can also triggered by a
+   specific request from a user program that an operating-system service be
+   performed.
 
 4. Exercise 1.27
    (1) Limited resources. The resources such as memory capacity
    and processing speed are more limited than those of PCs.
 
-   (2) power consumption.  The os need to carefully manage all
+   (2) power consumption. The os need to carefully manage all
    the programs not to produce massive power consumption.
+
 
 5. Exercise 2.16
    Many os treat devices as files.
    Advantages:
-   (1) For developers, it is easy to learn and convenient
-   to use if accessing file and device is combined in a same way.
-   (2) For hardware device company, they can follow uniformed API
-   which is easy for costumer to learn.
+   (1) For developers, it is easy to learn and use it, if accessing file and
+   device is combined in a same way.
+   (2) For hardware device company, they can follow uniformed API.
 
    Disadvantages:
-   Many devices may have more functions which the file API can
-   not cover.
+   Many devices may have more functions which the file API can not cover.
 
 6. Exercise 2.21
-   Main advantage:
+   1. Main advantage:
    (1) it makes extending the operating system easier. New services
    are added without modification of the kernel.
    (2) The microkernel is a smaller kernel. It means when the kernel
@@ -46,10 +48,10 @@
    (3) The microkernel also provides more security and reliability,
    since most services are running as user—rather than kernel—processes.
 
+   2. Communication between user programs and system services is provided
+   through message passing.
 
-   Communication is provided through message passing.
-
-   Disadvantage:
+   3. Disadvantage:
    The performance of microkernels can suffer due to increased
    system-function overhead.
 

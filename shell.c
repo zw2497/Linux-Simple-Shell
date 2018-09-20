@@ -757,8 +757,10 @@ int main(void)
 				break;
 			}
 			printf("$");
-			if (inputString(&ori, &size) == EXIT_FAILURE)
+			if (inputString(&ori, &size) == EXIT_FAILURE) {
+				freeOriArg();
 				continue;
+			}
 			run();
 			freeOriArg();
 
